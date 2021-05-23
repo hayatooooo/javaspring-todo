@@ -1,6 +1,9 @@
 package com.example.demo.service;
 
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Assertions;
@@ -16,7 +19,7 @@ import com.example.demo.entity.Task;
 @SpringJUnitConfig //Junit5上でSpring TestContext Frameworkを利用することを示す
 @SpringBootTest //毎回サーバ起動
 @ActiveProfiles("unit")//application-unit.ymlのunitを対応（DBの設定を読み込む）
-@DisplayName("TaskServiceImplの結合テスト")
+@DisplayName("TaskServiceImplの結合テスト")//implでのテスト。DB接続あり。
 class TaskServiceImplTest {
 
     @Autowired
@@ -37,17 +40,18 @@ class TaskServiceImplTest {
     @DisplayName("全件検索のテスト")
     void testFindAllCheckCount() {
     	//全件取得
-
+    	List<Task> list = taskService.findAll();
         //Taskテーブルに入っている2件が取得できているか確認
-
+    	assertEquals(2, list.size());
     }
 
     @Test
     @DisplayName("1件のタスクが取得できた場合のテスト")
     void testGetTaskFormReturnOne() {
     	//idが1のTaskを取得
-
+    	Optional<Task> taskOpt = taskService.getTask(1);
         //取得できたことを確認
+    	assertEquals("JUnitを学習", taskOpt.get().getTitle());
     }
 
 }

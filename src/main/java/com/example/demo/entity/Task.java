@@ -7,6 +7,7 @@ public class Task {
     private int id;
     private int userId;
     private int typeId;
+    //tasktypeを内包する
     private TaskType taskType;
     private String title;
     private String detail;

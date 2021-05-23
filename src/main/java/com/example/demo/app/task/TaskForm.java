@@ -26,6 +26,7 @@ public class TaskForm {
     @Future (message = "期限が過去に設定されています。")
     private LocalDateTime deadline;
 
+    //新規登録か更新登録か判断
     private boolean newTask;
     
     public TaskForm() {}

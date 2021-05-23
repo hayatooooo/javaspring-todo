@@ -3,16 +3,21 @@ package com.example.demo.service;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.entity.Task;
 import com.example.demo.repository.TaskDao;
 
+//例外やトランザクション処理はserviceでかく
 @Service
 public class TaskServiceImpl implements TaskService {
 
 	private final TaskDao dao;
 
+	//@Autowiired省略化
+	@Autowired
 	public TaskServiceImpl(TaskDao dao) {
 		this.dao = dao;
 	}
@@ -25,12 +30,12 @@ public class TaskServiceImpl implements TaskService {
 	@Override
 	public Optional<Task> getTask(int id) {
 
-		//削除してください
-		Optional<Task> taskOpt = null;
-		return taskOpt;
-
 		//Optional<Task>一件を取得 idが無ければ例外発生　
-
+		try {
+			return dao.findById(id);
+		} catch(EmptyResultDataAccessException e) {
+			throw new TaskNotFoundException("指定されたタスクが存在しません");
+		}
 	}
 
 	@Override
@@ -38,18 +43,24 @@ public class TaskServiceImpl implements TaskService {
 		dao.insert(task);
 	}
 
+	//daoでint型でreturnされたものがかえってくる
 	@Override
 	public void update(Task task) {
 
 		//Taskを更新　idが無ければ例外発生
-
+		if(dao.update(task) == 0) {
+			throw new TaskNotFoundException("更新するタスクがありません");
+		}
 	}
 
+	//daoでint型でreturnされたものがかえってくる
 	@Override
 	public void deleteById(int id) {
 
 		//Taskを更新 idがなければ例外発生
-
+		if(dao.deleteById(id) == 0) {
+			throw new TaskNotFoundException("削除するタスクが存在しません");
+		}
 	}
 
 	@Override
