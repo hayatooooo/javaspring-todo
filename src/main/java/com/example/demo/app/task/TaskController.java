@@ -26,6 +26,7 @@ import com.example.demo.service.TaskService;
 @RequestMapping("/task")
 public class TaskController {
 
+	//DI
     private final TaskService taskService;
 
     public TaskController(TaskService taskService) {
@@ -43,10 +44,12 @@ public class TaskController {
     public String task(TaskForm taskForm, Model model) {
 
     	//新規登録か更新かを判断する仕掛け
-
+    	taskForm.setNewTask(true);
+    	
         //Taskのリストを取得する
-
-        model.addAttribute("list", "");
+    	List<Task> list = taskService.findAll();
+    	
+        model.addAttribute("list", list);
         model.addAttribute("title", "タスク一覧");
 
         return "task/index";
@@ -64,22 +67,21 @@ public class TaskController {
     	@Valid @ModelAttribute TaskForm taskForm,
         BindingResult result,
         Model model) {
-
+    	
+    	//TaskFormのデータをTaskに格納
+    	Task task = makeTask(taskForm, 0);
+    	
         if (!result.hasErrors()) {
-        	//削除してください
-        	Task task = null;
-
-        	//TaskFormのデータをTaskに格納
-
+        	taskService.insert(task);
         	//一件挿入後リダイレクト
-
-            return "";
+            return "redirect:/task";
         } else {
             taskForm.setNewTask(true);
             model.addAttribute("taskForm", taskForm);
             List<Task> list = taskService.findAll();
             model.addAttribute("list", list);
             model.addAttribute("title", "タスク一覧（バリデーション）");
+            //バリデーションエラーメッセージを含んだ状態で画面表示
             return "task/index";
         }
     }
@@ -94,16 +96,20 @@ public class TaskController {
     @GetMapping("/{id}")
     public String showUpdate(
     	TaskForm taskForm,
+    	//urlのidを取得できる
         @PathVariable int id,
         Model model) {
 
     	//Taskを取得(Optionalでラップ)
-
+    	Optional<Task> taskOpt = taskService.getTask(id);
         //TaskFormへの詰め直し
-
+    	Optional<TaskForm> taskFormOpt = taskOpt.map(t -> makeTaskForm(t));
         //TaskFormがnullでなければ中身を取り出し
-
-        model.addAttribute("taskForm", "");
+    	if(taskFormOpt.isPresent()) {
+    		taskForm = taskFormOpt.get();
+    	}
+    	
+        model.addAttribute("taskForm", taskForm);
         List<Task> list = taskService.findAll();
         model.addAttribute("list", list);
         model.addAttribute("taskId", id);
@@ -124,16 +130,20 @@ public class TaskController {
     public String update(
     	@Valid @ModelAttribute TaskForm taskForm,
     	BindingResult result,
+    	//hiddenで渡された値の受け取り
     	@RequestParam("taskId") int taskId,
     	Model model,
+    	//フラッシュスコープ。メッセージの表示
     	RedirectAttributes redirectAttributes) {
+    	
+    	//TaskFormのデータをTaskに格納
+    	Task task = makeTask(taskForm, taskId);
 
         if (!result.hasErrors()) {
-        	//TaskFormのデータをTaskに格納
-
         	//更新処理、フラッシュスコープの使用、リダイレクト（個々の編集ページ）
-
-            return "" ;
+        	taskService.update(task);
+        	redirectAttributes.addFlashAttribute("complete","変更が完了しました");
+            return "redirect:/task/"+taskId;
         } else {
             model.addAttribute("taskForm", taskForm);
             model.addAttribute("title", "タスク一覧");
@@ -149,12 +159,12 @@ public class TaskController {
      */
     @PostMapping("/delete")
     public String delete(
-    	@RequestParam("taskId") String id,
+    	@RequestParam("taskId") int id,
     	Model model) {
 
     	//タスクを一件削除しリダイレクト
-
-        return "";
+    	taskService.deleteById(id);
+        return "redirect:/task";
     }
 
     /**
@@ -220,6 +230,7 @@ public class TaskController {
     }
 
 
+    //処理の共通化
     /**
      * TaskFormのデータをTaskに入れて返す
      * @param taskForm
@@ -239,6 +250,7 @@ public class TaskController {
         return task;
     }
 
+    //処理の共通化
     /**
      * TaskのデータをTaskFormに入れて返す
      * @param task
